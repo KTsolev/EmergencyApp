@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmergencyApp", "EmergencyApp.csproj", "{8E7AAB2F-9C8A-4D68-B5AF-DE90CBCE89AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmergencyApp.UITests", "EmergencyApp.UITests\EmergencyApp.UITests.csproj", "{6DE3C9A0-42CF-4970-A152-11ACA158DBEF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6DE3C9A0-42CF-4970-A152-11ACA158DBEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DE3C9A0-42CF-4970-A152-11ACA158DBEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DE3C9A0-42CF-4970-A152-11ACA158DBEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DE3C9A0-42CF-4970-A152-11ACA158DBEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E7AAB2F-9C8A-4D68-B5AF-DE90CBCE89AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E7AAB2F-9C8A-4D68-B5AF-DE90CBCE89AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E7AAB2F-9C8A-4D68-B5AF-DE90CBCE89AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E7AAB2F-9C8A-4D68-B5AF-DE90CBCE89AD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
