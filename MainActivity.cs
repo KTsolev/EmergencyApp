@@ -15,6 +15,7 @@ using Android.Views;
 using Android.Widget;
 using Android.OS;
 using Android.Net;
+using Android.Util;
 
 namespace EmergencyApp
 {
@@ -25,29 +26,24 @@ namespace EmergencyApp
         private Location prevLocation;
         private LocationManager locationManager;
         private TextView locationText;
-        private TextView addressText;
         private String locationProvider;
         private LatLng location;
-		readonly double eps = 0.001D;
+        private GoogleMap map;
+        private MapFragment mapFrag;
+		readonly double eps = 0.0001D;
 
 		protected override void OnCreate (Bundle bundle)
 		{
 			base.OnCreate(bundle);
 			SetContentView(Resource.Layout.Main);
 
-			addressText = FindViewById<TextView>(Resource.Id.address_text);
 			locationText = FindViewById<TextView>(Resource.Id.location_text);
-			FindViewById<TextView>(Resource.Id.get_address_button).Click += AddressButton_OnClick;
-            var connectivityManager = (ConnectivityManager)GetSystemService(ConnectivityService);
-            var mobileState = connectivityManager.GetNetworkInfo(ConnectivityType.Mobile).GetState();
-            if (mobileState == NetworkInfo.State.Connected)
-            {
-                InitializeLocationManager();        
-            }
-            else
-            {
-                IvokeErrorHandler("There is no internet connection");
-            }		
+
+            mapFrag = (MapFragment)FragmentManager.FindFragmentById(Resource.Id.map);
+            map = mapFrag.Map;
+
+            InitializeLocationManager();
+            InitializeMap();
 		}
 
 		void InitializeLocationManager()
@@ -55,7 +51,7 @@ namespace EmergencyApp
 			locationManager = (LocationManager)GetSystemService(LocationService);
 			Criteria criteriaForLocationService = new Criteria
 			{
-				Accuracy = Accuracy.Medium
+                    Accuracy = Accuracy.Fine
 			};
 
 			IList<string> acceptableLocationProviders = locationManager.GetProviders(criteriaForLocationService, true);
@@ -76,63 +72,50 @@ namespace EmergencyApp
 
 		public void OnStatusChanged(string provider, Availability status, Bundle extras) {}
 
-		protected override void OnResume()
-		{
-			base.OnResume();
-			locationManager.RequestLocationUpdates(locationProvider, 0, 0, this);
-		}
-
+        protected override void OnResume()
+        {
+            base.OnResume();
+            if(locationProvider != null)
+                locationManager.RequestLocationUpdates(locationProvider, 2000L, 0.01F,  this);
+        }
 		protected override void OnPause()
 		{
 			base.OnPause();
+            if(locationManager != null)
 			locationManager.RemoveUpdates(this);
 		}
-
-		async void AddressButton_OnClick(object sender, EventArgs eventArgs)
-		{
-			if (currentLocation == null)
-			{
-                IvokeErrorHandler("Can't determine the current address.");
-				addressText.Text = "Can't determine the current address.";
-				return;
-			}
-
-			Geocoder geocoder = new Geocoder(this);
-			IList<Address> addressList = await geocoder.GetFromLocationAsync(currentLocation.Latitude, currentLocation.Longitude, 10);
-			prevLocation = currentLocation;
-			Address address = addressList.FirstOrDefault();
-			if (address != null)
-			{
-				StringBuilder deviceAddress = new StringBuilder();
-				for (int i = 0; i < address.MaxAddressLineIndex; i++)
-				{
-					deviceAddress.Append(address.GetAddressLine(i))
-						.AppendLine(",");
-				}
-				addressText.Text = deviceAddress.ToString();
-			}
-			else
-			{
-				addressText.Text = "Unable to determine the address.";
-                IvokeErrorHandler("Unable to determine the address.");
-			}	
-            InitializeMap ();
-		}
-
+            
 		public void OnLocationChanged(Location location)
 		{
 			currentLocation = location;
-
-			if (currentLocation == null)
+            prevLocation = locationManager.GetLastKnownLocation(locationProvider);
+			if (currentLocation == null && prevLocation == null)
 			{
-				locationText.Text = "Unable to determine your location.";
-                IvokeErrorHandler("Unable to determine your location.");
+                //GPS Provider can not find current location uses network provider for finding device location
+                string Provider = LocationManager.NetworkProvider;
+
+                if(locationManager.IsProviderEnabled(Provider))
+                {
+                    locationManager.RequestLocationUpdates (Provider, 2000L, 0.01F,  this);
+                } 
 			}
 			else
 			{
 				locationText.Text = String.Format ("{0},{1}", currentLocation.Latitude, currentLocation.Longitude);
-                prevLocation = currentLocation;
-                InitializeMap();
+                double diffAlt = (double) Math.Abs(prevLocation.Latitude - currentLocation.Latitude);
+                double diffLong = (double) Math.Abs(prevLocation.Longitude - currentLocation.Longitude);
+                if ((diffAlt > eps ) && (diffLong > eps))
+                {
+
+                    string tag = "prevLocation - currentLocation";
+                    string tag1 = "prevLocation";
+                    string tag2 = "currentLocation";
+                    Log.Info(tag, diffAlt.ToString());
+                    Log.Info(tag, diffLong.ToString());
+                    Log.Info(tag1, prevLocation.ToString());
+                    Log.Info(tag2, currentLocation.ToString());
+                    InitializeMap();
+                }
 			}
 		}
 
@@ -144,15 +127,22 @@ namespace EmergencyApp
 			}
 			else 
 			{
-				addressText.Text = "Can't load map!";
-                IvokeErrorHandler("Can't load map!");
+                //GPS Provider can not find current location uses network provider for finding device location
+                string Provider = LocationManager.NetworkProvider;
 
+                if(locationManager.IsProviderEnabled(Provider))
+                {
+                    locationManager.RequestLocationUpdates (Provider, 2000L, 0.01F, this);
+                    currentLocation = locationManager.GetLastKnownLocation(locationProvider);
+                    location = new LatLng (currentLocation.Latitude, currentLocation.Longitude);
+                } 
 			}
-
-            if (Math.Abs(prevLocation.Latitude - currentLocation.Latitude) < eps && Math.Abs(prevLocation.Longitude - currentLocation.Longitude) < eps)
+         
+            var connectivityManager = (ConnectivityManager)GetSystemService(ConnectivityService);
+            var mobileState = connectivityManager.GetNetworkInfo(ConnectivityType.Wifi).GetState();
+            if(location != null)
+            if (mobileState == NetworkInfo.State.Connected)
             {
-                prevLocation = currentLocation;
-
                 CameraPosition.Builder builder = CameraPosition.InvokeBuilder();
 
                 builder.Target(location);
@@ -160,15 +150,17 @@ namespace EmergencyApp
                 builder.Bearing(155);
                 builder.Tilt(65);
 
-                MapFragment mapFrag = (MapFragment)FragmentManager.FindFragmentById(Resource.Id.map);
-                GoogleMap map = mapFrag.Map;
+
                 CameraPosition cameraPosition = builder.Build();
                 CameraUpdate cameraUpdate = CameraUpdateFactory.NewCameraPosition(cameraPosition);
+
 
                 if (map != null)
                 {
                     map.MoveCamera(cameraUpdate);
-                    map.MapType = GoogleMap.MapTypeHybrid;
+                    map.MapType = GoogleMap.MapTypeSatellite;
+                    map.UiSettings.MapToolbarEnabled = true;
+                    map.UiSettings.MyLocationButtonEnabled = true;
                     map.UiSettings.ZoomControlsEnabled = true;
                     map.UiSettings.CompassEnabled = true;
                     MarkerOptions markerOpt1 = new MarkerOptions();
@@ -178,13 +170,16 @@ namespace EmergencyApp
                 }
                 else
                 {
-                    addressText.Text = "Can't load map!";
-                    IvokeErrorHandler("Can't load map!");
+                    InitializeErrorHandler("Can't load map!");
                 }
+            }
+            else
+            {
+                InitializeErrorHandler("No Internet Conection!");
             }
 		}
 
-        public void IvokeErrorHandler(string error)
+        public void InitializeErrorHandler(string error)
         {
             var activity2 = new Intent (this, typeof(ErrorHandler));
             activity2.PutExtra ("error", error);

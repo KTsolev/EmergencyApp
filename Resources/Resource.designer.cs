@@ -1651,9 +1651,6 @@ namespace EmergencyApp
 			// aapt resource value: 0x7f0a003a
 			public const int activity_chooser_view_content = 2131361850;
 			
-			// aapt resource value: 0x7f0a0065
-			public const int address_text = 2131361893;
-			
 			// aapt resource value: 0x7f0a0023
 			public const int adjust_height = 2131361827;
 			
@@ -1732,9 +1729,6 @@ namespace EmergencyApp
 			// aapt resource value: 0x7f0a004b
 			public const int expanded_menu = 2131361867;
 			
-			// aapt resource value: 0x7f0a0064
-			public const int get_address_button = 2131361892;
-			
 			// aapt resource value: 0x7f0a0035
 			public const int grayscale = 2131361845;
 			
@@ -1771,8 +1765,8 @@ namespace EmergencyApp
 			// aapt resource value: 0x7f0a0063
 			public const int location_text = 2131361891;
 			
-			// aapt resource value: 0x7f0a0066
-			public const int map = 2131361894;
+			// aapt resource value: 0x7f0a0064
+			public const int map = 2131361892;
 			
 			// aapt resource value: 0x7f0a002f
 			public const int match_parent = 2131361839;
